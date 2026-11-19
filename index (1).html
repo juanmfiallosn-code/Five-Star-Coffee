@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Café Brasa · Menú</title>
+<style>
+:root{color-scheme:dark;--bg:#0f0e0d;--card:#1a1816;--tx:#f1ece4;--mu:#a39a8e;--ac:#d9a35b;--bd:#2c2823;--rd:#e07a6b}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.wrap{max-width:860px;margin:0 auto;padding:0 20px 60px}
+header{padding:56px 0 28px;border-bottom:1px solid var(--bd);margin-bottom:32px}
+.eyebrow{color:var(--ac);letter-spacing:.2em;text-transform:uppercase;font-size:12px}
+h1{font:600 clamp(36px,7vw,60px)/1.05 Georgia,serif;margin:10px 0 8px}
+header p{color:var(--mu);margin:0;max-width:46ch}
+h2{font:600 22px Georgia,serif;color:var(--ac);margin:36px 0 12px}
+.item{display:flex;justify-content:space-between;gap:16px;padding:14px 0;border-bottom:1px dashed var(--bd)}
+.item h3{margin:0;font-size:17px}.item p{margin:2px 0 0;color:var(--mu);font-size:14px}
+.price{color:var(--ac);font-weight:600;white-space:nowrap}
+.off{opacity:.45}.tag{font-size:11px;color:var(--rd);border:1px solid var(--rd);border-radius:99px;padding:1px 8px;margin-left:8px}
+#st,.empty{color:var(--mu);text-align:center;padding:24px 0}
+.bar{display:flex;justify-content:space-between;align-items:center;gap:12px;background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:12px 16px;margin-bottom:20px}
+button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--bd);background:var(--card);color:var(--tx);padding:7px 14px}
+button.pri{background:var(--ac);color:#1a1208;border-color:var(--ac);font-weight:600}
+button.del{color:var(--rd)}
+.acts{display:flex;gap:6px;margin-top:8px}.acts button{padding:3px 10px;font-size:13px}
+form{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:16px;display:grid;gap:10px;margin-bottom:24px}
+[hidden]{display:none!important}
+input,select,textarea{font:inherit;width:100%;background:var(--bg);color:var(--tx);border:1px solid var(--bd);border-radius:8px;padding:8px 10px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+label{font-size:13px;color:var(--mu);display:grid;gap:4px}
+label.ck{display:flex;align-items:center;gap:8px;color:var(--tx)}label.ck input{width:auto}
+footer{color:var(--mu);font-size:13px;text-align:center;padding-top:40px}
+footer button{background:none;border:none;color:var(--mu);text-decoration:underline;padding:0}
+#err{color:var(--rd);font-size:14px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div class="eyebrow">Cafetería · Tostado artesanal</div>
+  <h1>Café Brasa</h1>
+  <p>Café de especialidad, postres hechos cada mañana y un rincón tranquilo para quedarte.</p>
+</header>
+
+<div class="bar" id="adminbar" hidden>
+  <span>Modo administrador</span>
+  <span><button class="pri" id="newbtn">+ Nuevo plato</button> <button id="logout">Salir</button></span>
+</div>
+
+<form id="login" hidden>
+  <label>Correo<input id="l-mail" type="email" required autocomplete="username"></label>
+  <label>Contraseña<input id="l-pass" type="password" required autocomplete="current-password"></label>
+  <div id="err"></div>
+  <div class="acts"><button class="pri" type="submit">Entrar</button><button type="button" id="l-cancel">Cancelar</button></div>
+</form>
+
+<form id="form" hidden>
+  <div class="row">
+    <label>Nombre<input id="f-name" required maxlength="60"></label>
+    <label>Precio (L)<input id="f-price" type="number" step="0.01" min="0" required></label>
+  </div>
+  <label>Descripción<textarea id="f-desc" rows="2" maxlength="160"></textarea></label>
+  <div class="row">
+    <label>Categoría<select id="f-cat"><option>Café</option><option>Bebidas frías</option><option>Postres</option><option>Snacks</option></select></label>
+    <label class="ck"><input id="f-ok" type="checkbox" checked> Disponible hoy</label>
+  </div>
+  <div class="acts"><button class="pri" type="submit">Guardar</button><button type="button" id="cancel">Cancelar</button></div>
+</form>
+
+<div id="st">Cargando menú…</div>
+<main id="menu"></main>
+<footer>Menú de demostración · Los precios pueden cambiar<br><br><button id="adminlink">Acceso administrador</button></footer>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script>
+// 1) Pega aquí los datos de tu proyecto (Supabase > Project Settings > API).
+//    La "anon key" es pública por diseño: la seguridad la dan las reglas del schema.sql.
+var SUPABASE_URL='PEGA_TU_PROJECT_URL';
+var SUPABASE_ANON_KEY='PEGA_TU_ANON_KEY';
+
+var sb=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+var CATS=['Café','Bebidas frías','Postres','Snacks'];
+var items=[],isAdmin=false,editId=null;
+function $(s){return document.querySelector(s)}
+function el(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e}
+
+function render(){
+  var m=$('#menu');m.textContent='';
+  if(!items.length){m.appendChild(el('div','empty','El menú estará disponible pronto.'));return}
+  CATS.forEach(function(cat){
+    var g=items.filter(function(i){return i.category===cat});
+    if(!g.length)return;
+    m.appendChild(el('h2',null,cat));
+    g.forEach(function(i){
+      var row=el('div','item'+(i.available?'':' off'));
+      var l=el('div'),h=el('h3',null,i.name);
+      if(!i.available)h.appendChild(el('span','tag','Agotado'));
+      l.appendChild(h);if(i.description)l.appendChild(el('p',null,i.description));
+      if(isAdmin){
+        var a=el('div','acts'),e=el('button',null,'Editar'),d=el('button','del','Eliminar');
+        e.onclick=function(){openForm(i)};d.onclick=function(){removeItem(i)};
+        a.appendChild(e);a.appendChild(d);l.appendChild(a);
+      }
+      row.appendChild(l);row.appendChild(el('div','price','L '+Number(i.price).toFixed(2)));
+      m.appendChild(row);
+    });
+  });
+}
+
+async function load(){
+  var r=await sb.from('menu_items').select('*').order('name');
+  if(r.error){$('#st').textContent='No se pudo cargar el menú.';return}
+  $('#st').textContent='';items=r.data;render();
+}
+
+async function checkAdmin(){
+  var s=await sb.auth.getSession();
+  isAdmin=false;
+  if(s.data.session){
+    var r=await sb.from('admins').select('user_id').maybeSingle();
+    isAdmin=!!(r.data);
+  }
+  $('#adminbar').hidden=!isAdmin;
+  $('#adminlink').hidden=isAdmin;
+  await load();
+}
+
+function openForm(i){
+  editId=i?i.id:null;
+  $('#f-name').value=i?i.name:'';$('#f-price').value=i?i.price:'';
+  $('#f-desc').value=i?(i.description||''):'';$('#f-cat').value=i?i.category:CATS[0];
+  $('#f-ok').checked=i?i.available:true;
+  $('#form').hidden=false;$('#f-name').focus();
+}
+function closeForm(){$('#form').hidden=true;editId=null}
+
+async function removeItem(i){
+  if(!confirm('¿Eliminar “'+i.name+'”?'))return;
+  var r=await sb.from('menu_items').delete().eq('id',i.id);
+  if(r.error)alert('No se pudo eliminar.');else load();
+}
+
+$('#newbtn').onclick=function(){openForm(null)};
+$('#cancel').onclick=closeForm;
+$('#form').onsubmit=async function(ev){
+  ev.preventDefault();
+  var d={name:$('#f-name').value.trim(),price:parseFloat($('#f-price').value)||0,description:$('#f-desc').value.trim(),category:$('#f-cat').value,available:$('#f-ok').checked};
+  var r=editId?await sb.from('menu_items').update(d).eq('id',editId):await sb.from('menu_items').insert(d);
+  if(r.error){alert('No se pudo guardar.');return}
+  closeForm();load();
+};
+
+$('#adminlink').onclick=function(){$('#login').hidden=false;$('#l-mail').focus()};
+$('#l-cancel').onclick=function(){$('#login').hidden=true};
+$('#login').onsubmit=async function(ev){
+  ev.preventDefault();$('#err').textContent='';
+  var r=await sb.auth.signInWithPassword({email:$('#l-mail').value,password:$('#l-pass').value});
+  if(r.error){$('#err').textContent='Correo o contraseña incorrectos.';return}
+  $('#login').hidden=true;$('#l-pass').value='';checkAdmin();
+};
+$('#logout').onclick=async function(){await sb.auth.signOut();closeForm();checkAdmin()};
+
+checkAdmin();
+</script>
+</body>
+</html>
