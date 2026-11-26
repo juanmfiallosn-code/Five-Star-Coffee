@@ -104,42 +104,6 @@ footer{margin-top:44px;padding-top:24px;border-top:1px solid var(--bd);color:var
     <p>Café de especialidad, postres hechos cada mañana y un rincón tranquilo para quedarte.</p>
   </header>
 
-  <div class="bar" id="adminbar" hidden>
-    <span>Modo administrador</span>
-    <span class="bar-btns">
-      <button class="pri" id="newbtn">+ Nuevo plato</button>
-      <button id="seedbtn">Cargar menú completo</button>
-      <button id="logout">Salir</button>
-    </span>
-  </div>
-
-  <form id="login" hidden>
-    <h3>Acceso administrador</h3>
-    <label>Correo<input id="l-mail" type="email" required autocomplete="username"></label>
-    <label>Contraseña<input id="l-pass" type="password" required autocomplete="current-password"></label>
-    <div id="err"></div>
-    <div class="acts">
-      <button class="pri" type="submit">Entrar</button>
-      <button type="button" id="l-cancel">Cancelar</button>
-    </div>
-  </form>
-
-  <form id="form" hidden>
-    <h3 id="form-title">Nuevo plato</h3>
-    <div class="row">
-      <label>Nombre<input id="f-name" required maxlength="60"></label>
-      <label>Precio (L)<input id="f-price" type="number" step="0.01" min="0" required></label>
-    </div>
-    <label>Descripción<textarea id="f-desc" rows="2" maxlength="160"></textarea></label>
-    <div class="row">
-      <label>Categoría<select id="f-cat"></select></label>
-      <label class="ck"><input id="f-ok" type="checkbox" checked> Disponible hoy</label>
-    </div>
-    <div class="acts">
-      <button class="pri" type="submit">Guardar</button>
-      <button type="button" id="cancel">Cancelar</button>
-    </div>
-  </form>
 
   <div class="search-box" id="search-wrap" hidden>
     <span class="search-ico" aria-hidden="true">🔍</span>
