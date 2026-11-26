@@ -38,6 +38,14 @@ label.ck{display:flex;align-items:center;gap:8px;color:var(--tx)}label.ck input{
 footer{color:var(--mu);font-size:13px;text-align:center;padding-top:40px}
 footer button{background:none;border:none;color:var(--mu);text-decoration:underline;padding:0}
 #err{color:var(--rd);font-size:14px}
+
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+#cats{position:sticky;top:0;z-index:10;display:flex;gap:8px;overflow-x:auto;padding:10px 20px;margin:0 -20px 8px;background:rgba(246,239,230,.95);backdrop-filter:blur(6px);border-bottom:1px solid var(--bd);scrollbar-width:none}
+#cats::-webkit-scrollbar{display:none}
+#cats button{flex:0 0 auto;border-radius:99px;background:var(--card);border:1px solid var(--bd);color:var(--navy);padding:6px 14px;font-size:14px;white-space:nowrap}
+#cats button.on{background:var(--ac);border-color:var(--ac);color:#fff;font-weight:600}
+#menu h2{scroll-margin-top:68px}
 </style>
 </head>
 <body>
@@ -74,6 +82,7 @@ footer button{background:none;border:none;color:var(--mu);text-decoration:underl
   <div class="acts"><button class="pri" type="submit">Guardar</button><button type="button" id="cancel">Cancelar</button></div>
 </form>
 
+<nav id="cats" aria-label="Categorías del menú" hidden></nav>
 <div id="st">Cargando menú…</div>
 <main id="menu"></main>
 <footer>Menú de demostración · Los precios pueden cambiar<br><br><button id="adminlink">Acceso administrador</button></footer>
@@ -126,10 +135,12 @@ function render(){
   var m=$('#menu');m.textContent='';
   var cats=CATS.slice();
   items.forEach(function(i){if(cats.indexOf(i.category)<0)cats.push(i.category)});
+  var vis=[];
   cats.forEach(function(cat){
     var g=items.filter(function(i){return i.category===cat});
     if(!g.length&&cat!=='Postres')return;
-    m.appendChild(el('h2',null,cat));
+    var h2=el('h2',null,cat);h2.id='cat-'+vis.length;vis.push(cat);
+    m.appendChild(h2);
     if(!g.length){m.appendChild(el('div','empty','Consulta por nuestros postres del día.'));return}
     g.forEach(function(i){
       var row=el('div','item'+(i.available?'':' off'));
@@ -145,7 +156,31 @@ function render(){
       m.appendChild(row);
     });
   });
+  buildNav(vis);
 }
+
+
+function buildNav(vis){
+  var n=$('#cats');n.textContent='';
+  n.hidden=vis.length<2;
+  vis.forEach(function(c,k){
+    var b=el('button',null,c);b.type='button';b.setAttribute('data-k',k);
+    b.onclick=function(){var t=document.getElementById('cat-'+k);if(t)t.scrollIntoView()};
+    n.appendChild(b);
+  });
+  markActive();
+}
+function markActive(){
+  var n=$('#cats'),hs=document.querySelectorAll('#menu h2'),cur=0;
+  hs.forEach(function(h,k){if(h.getBoundingClientRect().top<=90)cur=k});
+  if(window.innerHeight+window.scrollY>=document.body.scrollHeight-4)cur=hs.length-1;
+  n.querySelectorAll('button').forEach(function(b){
+    var on=Number(b.getAttribute('data-k'))===cur;
+    b.classList.toggle('on',on);
+    if(on&&!n.matches(':hover'))n.scrollTo({left:b.offsetLeft-n.clientWidth/2+b.offsetWidth/2});
+  });
+}
+window.addEventListener('scroll',markActive,{passive:true});
 
 async function load(){
   var r=await sb.from('menu_items').select('*').order('name');
