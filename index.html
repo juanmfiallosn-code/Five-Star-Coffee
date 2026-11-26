@@ -150,7 +150,9 @@ function render(){
 async function load(){
   var r=await sb.from('menu_items').select('*').order('name');
   $('#st').textContent='';
-  items=(r.error||!r.data||!r.data.length)?DEFAULTS:r.data;
+  var db=r.data||[];
+  var known=db.filter(function(i){return CATS.indexOf(i.category)>=0});
+  items=(r.error||!known.length)?DEFAULTS:db;
   render();
 }
 
