@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Five Star Coffee · Administración</title>
+<style>
+:root{--bg:#f6efe6;--card:#ffffff;--tx:#231815;--mu:#6f625a;--ac:#c4161c;--ac2:#9f1015;--bd:#e5d9cc;--navy:#1f2a44;--rd:#c4161c;--ok:#15803d}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(120% 70% at 50% 0%,#fff9f2 0%,#f5ebe0 55%,#eadccf 100%);background-attachment:fixed;color:var(--tx);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.wrap{max-width:860px;margin:0 auto;padding:24px 20px 64px}
+
+/* Cabecera Admin */
+.head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px;background:var(--navy);color:#fff;border-radius:16px;padding:18px 22px;margin-bottom:22px;box-shadow:0 8px 24px rgba(31,42,68,.16)}
+.head h1{font:600 22px Georgia,serif;margin:0}
+.head p{margin:2px 0 0;font-size:13px;opacity:.82}
+.head-acts{display:flex;flex-wrap:wrap;gap:8px}
+
+/* Botones y controles */
+button,a.btn{font:inherit;cursor:pointer;border-radius:9px;border:1px solid var(--bd);background:var(--card);color:var(--tx);padding:8px 14px;font-size:14px;font-weight:500;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--navy);outline-offset:2px}
+button.pri{background:var(--ac);color:#fff;border-color:var(--ac);font-weight:600}
+button.pri:hover{background:var(--ac2)}
+button.ghost{background:rgba(255,255,255,.12);color:#fff;border-color:rgba(255,255,255,.24)}
+button.ghost:hover{background:rgba(255,255,255,.2)}
+button.del{color:var(--rd);border-color:var(--rd)}
+[hidden]{display:none!important}
+
+/* Formularios (Login y Editor) */
+.card-box{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:22px;margin-bottom:22px;box-shadow:0 4px 18px rgba(35,24,21,.06)}
+.login-box{max-width:420px;margin:40px auto}
+.card-box h2{font:600 20px Georgia,serif;color:var(--navy);margin:0 0 14px}
+form{display:grid;gap:13px}
+input,select,textarea{font:inherit;width:100%;background:var(--bg);color:var(--tx);border:1px solid var(--bd);border-radius:9px;padding:10px 12px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:540px){.row{grid-template-columns:1fr}}
+label{font-size:13px;color:var(--mu);font-weight:500;display:grid;gap:5px}
+label.ck{display:flex;align-items:center;gap:8px;color:var(--tx);align-self:end;padding-bottom:10px;cursor:pointer}
+label.ck input{width:18px;height:18px;accent-color:var(--ac)}
+.acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+#err{color:var(--rd);font-size:14px;font-weight:500}
+
+/* Barra de herramientas del panel */
+.toolbar{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px;margin-bottom:18px}
+.toolbar input{max-width:340px;background:var(--card)}
+.stats{font-size:13.5px;color:var(--mu);font-weight:500}
+
+/* Lista de platillos */
+h3.cat-title{font:600 19px Georgia,serif;color:var(--ac);margin:26px 0 8px;padding-bottom:6px;border-bottom:2px solid var(--ac)}
+.item{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:14px 16px;margin-bottom:9px;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px}
+.item.off{opacity:.62}
+.item-info{flex:1 1 240px}
+.item-info strong{font-size:16px;color:var(--navy);display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap}
+.item-info p{margin:3px 0 0;font-size:13.5px;color:var(--mu)}
+.badge{font-size:11px;padding:2px 8px;border-radius:99px;font-weight:600}
+.badge.ok{background:#dcfce7;color:var(--ok)}
+.badge.no{background:#fee2e2;color:var(--rd)}
+.item-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.price{font-weight:700;color:var(--ac);font-size:16px;min-width:78px;text-align:right}
+.item-btns{display:flex;gap:6px}
+.item-btns button{padding:5px 10px;font-size:13px}
+.empty{text-align:center;padding:32px;background:var(--card);border:1px dashed var(--bd);border-radius:12px;color:var(--mu)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="head">
+    <div>
+      <h1>Five Star Coffee · Panel Admin</h1>
+      <p>Gestión de platillos, precios y disponibilidad</p>
+    </div>
+    <div class="head-acts">
+      <a class="btn" href="index.html" target="_blank">Ver menú público ↗</a>
+      <button class="ghost" id="logout" hidden>Cerrar sesión</button>
+    </div>
+  </header>
+
+  <!-- Pantalla de acceso -->
+  <section class="card-box login-box" id="login-sec">
+    <h2>Iniciar sesión</h2>
+    <form id="login">
+      <label>Correo electrónico<input id="l-mail" type="email" required autocomplete="username"></label>
+      <label>Contraseña<input id="l-pass" type="password" required autocomplete="current-password"></label>
+      <div id="err"></div>
+      <div class="acts">
+        <button class="pri" type="submit">Entrar al panel</button>
+      </div>
+    </form>
+  </section>
+
+  <!-- Panel principal (solo visible tras autenticarse como admin) -->
+  <section id="panel-sec" hidden>
+    <div class="toolbar">
+      <div class="acts">
+        <button class="pri" id="newbtn">+ Agregar platillo</button>
+        <button id="seedbtn">Restaurar menú base</button>
+      </div>
+      <input id="q" type="search" placeholder="Filtrar por nombre o categoría…">
+      <span class="stats" id="stats"></span>
+    </div>
+
+    <!-- Formulario Crear / Editar -->
+    <div class="card-box" id="form-box" hidden>
+      <h2 id="form-title">Nuevo platillo</h2>
+      <form id="form">
+        <div class="row">
+          <label>Nombre del platillo<input id="f-name" required maxlength="60" placeholder="Ej. Capuchino 12 oz"></label>
+          <label>Precio (L)<input id="f-price" type="number" step="0.01" min="0" required placeholder="0.00"></label>
+        </div>
+        <label>Descripción o tamaño (opcional)<textarea id="f-desc" rows="2" maxlength="160" placeholder="Ej. 12 oz · Leche deslactosada disponible"></textarea></label>
+        <div class="row">
+          <label>Categoría<select id="f-cat"></select></label>
+          <label class="ck"><input id="f-ok" type="checkbox" checked> Disponible hoy en barra</label>
+        </div>
+        <div class="acts">
+          <button class="pri" type="submit">Guardar cambios</button>
+          <button type="button" id="cancel">Cancelar</button>
+        </div>
+      </form>
+    </div>
+
+    <div id="list"></div>
+  </section>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script>
+var SUPABASE_URL='https://joupmggamcrobxcumaab.supabase.co';
+var SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpvdXBtZ2dhbWNyb2J4Y3VtYWFiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTUxMjI5MTMsImV4cCI6MjExMDY5ODkxM30.dr1pgE2hNC-psHMGpE8V_Irorr_q3xHTIkfixtj9yBE';
+
+var sb=(window.supabase&&window.supabase.createClient)?window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY):null;
+var CATS=['Bebidas calientes','Bebidas frías con café','Bebidas frías naturales','Dulces','Salados','Postres'];
+
+function D(c,n,p,d){return{category:c,name:n,price:p,description:d||'',available:true}}
+var DEFAULTS=[
+D('Bebidas calientes','Americano 8 oz',45),D('Bebidas calientes','Americano 12 oz',55),
+D('Bebidas calientes','Capuchino 8 oz',55),D('Bebidas calientes','Capuchino 12 oz',65),
+D('Bebidas calientes','Latté 8 oz',58),D('Bebidas calientes','Latté 12 oz',68),
+D('Bebidas calientes','Chai latté 8 oz',68),D('Bebidas calientes','Chai latté 12 oz',78),
+D('Bebidas calientes','Chocolate 8 oz',57),D('Bebidas calientes','Chocolate 12 oz',70),
+D('Bebidas calientes','Espresso Boom',80),D('Bebidas calientes','Macchiato',65),
+D('Bebidas calientes','Mocca 8 oz',65),D('Bebidas calientes','Mocca 12 oz',75),
+D('Bebidas calientes','Espresso 8 oz',40),D('Bebidas calientes','Espresso 12 oz',65),
+D('Bebidas calientes','Matcha 8 oz',75),D('Bebidas calientes','Matcha 12 oz',98),
+D('Bebidas frías con café','Frozen de café',80,'12 oz'),D('Bebidas frías con café','Frozen de café & Oreo',85,'12 oz'),
+D('Bebidas frías con café','Frozen Five Star',90,'12 oz'),D('Bebidas frías con café','Iced coffee',80,'12 oz'),
+D('Bebidas frías con café','Iced latté',80,'12 oz'),D('Bebidas frías con café','Mocca frío',85,'12 oz'),
+D('Bebidas frías naturales','Frozen de arándanos',95,'12 oz'),D('Bebidas frías naturales','Frozen de piña',95,'12 oz'),
+D('Bebidas frías naturales','Frozen de fresa',95,'12 oz'),D('Bebidas frías naturales','Frozen de menta limón',75,'12 oz'),
+D('Bebidas frías naturales','Frozen de limón',70,'12 oz'),D('Bebidas frías naturales','Frozen de maracuyá',90,'12 oz'),
+D('Bebidas frías naturales','Frozen de banano',80,'12 oz'),D('Bebidas frías naturales','Limonada líquida',60,'12 oz'),
+D('Bebidas frías naturales','Frozen tropical',95,'12 oz'),D('Bebidas frías naturales','Frozen de mango',85,'12 oz'),
+D('Bebidas frías naturales','Frozen de tamarindo',80,'12 oz'),D('Bebidas frías naturales','Té frío',75,'12 oz'),
+D('Bebidas frías naturales','Frozen de sandía',90,'12 oz'),D('Bebidas frías naturales','Frozen de sandía y limón',95,'12 oz'),
+D('Bebidas frías naturales','Frozen chai',98,'12 oz'),D('Bebidas frías naturales','Frozen matcha',115,'12 oz'),
+D('Bebidas frías naturales','Frozen horchata',80,'12 oz'),D('Bebidas frías naturales','Frozen de chocolate',85,'12 oz'),
+D('Dulces','Crepa con queso crema y nutella',105),D('Dulces','Waffle',85),D('Dulces','Waffle de Oreo',105),
+D('Dulces','Waffle con frutas',95),D('Dulces','Panqueques',85),
+D('Salados','Croissant de jamón y queso',80),D('Salados','Panini de pollo',95),D('Salados','Panini de jamón',80),
+D('Salados','Pan con frijoles',40),D('Salados','Pan con frijoles y huevo',50),D('Salados','Empanada de pollo',50)
+];
+
+var items=[],editId=null,queryText='';
+function $(s){return document.querySelector(s)}
+function el(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e}
+function norm(str){return (str||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')}
+
+CATS.forEach(function(c){
+  var o=el('option',null,c);o.value=c;$('#f-cat').appendChild(o);
+});
+
+function render(){
+  var box=$('#list');box.textContent='';
+  var q=norm(queryText.trim());
+  var filtered=q?items.filter(function(i){
+    return norm(i.name).indexOf(q)>=0||norm(i.description).indexOf(q)>=0||norm(i.category).indexOf(q)>=0;
+  }):items;
+
+  $('#stats').textContent=filtered.length+' de '+items.length+' platillos';
+
+  if(!filtered.length){
+    box.appendChild(el('div','empty',items.length?'No hay platillos que coincidan con la búsqueda.':'Aún no hay platillos en la base de datos. Usa "+ Agregar platillo" o "Restaurar menú base".'));
+    return;
+  }
+
+  var cats=CATS.slice();
+  filtered.forEach(function(i){if(cats.indexOf(i.category)<0)cats.push(i.category)});
+
+  cats.forEach(function(cat){
+    var g=filtered.filter(function(i){return i.category===cat});
+    if(!g.length)return;
+    box.appendChild(el('h3','cat-title',cat+' ('+g.length+')'));
+    g.forEach(function(i){
+      var row=el('div','item'+(i.available?'':' off'));
+      var info=el('div','item-info');
+      var title=el('strong',null,i.name);
+      title.appendChild(el('span','badge '+(i.available?'ok':'no'),i.available?'Disponible':'Agotado'));
+      info.appendChild(title);
+      if(i.description)info.appendChild(el('p',null,i.description));
+
+      var right=el('div','item-right');
+      right.appendChild(el('span','price','L '+Number(i.price).toFixed(2)));
+
+      var btns=el('div','item-btns');
+      var tog=el('button',null,i.available?'Marcar agotado':'Activar');
+      var ed=el('button',null,'Editar');
+      var del=el('button','del','Borrar');
+
+      tog.onclick=function(){toggleAvail(i)};
+      ed.onclick=function(){openForm(i)};
+      del.onclick=function(){removeItem(i)};
+
+      btns.appendChild(tog);btns.appendChild(ed);btns.appendChild(del);
+      right.appendChild(btns);
+      row.appendChild(info);row.appendChild(right);
+      box.appendChild(row);
+    });
+  });
+}
+
+async function load(){
+  if(!sb)return;
+  var r=await sb.from('menu_items').select('*').order('name');
+  if(r.error){alert('Error al cargar el menú: '+r.error.message);return}
+  items=r.data||[];
+  render();
+}
+
+async function checkSession(){
+  if(!sb){$('#err').textContent='Error cargando la librería de Supabase.';return}
+  var s=await sb.auth.getSession();
+  var ok=false;
+  if(s&&s.data&&s.data.session){
+    var r=await sb.from('admins').select('user_id').maybeSingle();
+    ok=!!(r&&r.data);
+    if(!ok){
+      await sb.auth.signOut();
+      $('#err').textContent='Esta cuenta no tiene permisos de administrador.';
+    }
+  }
+  $('#login-sec').hidden=ok;
+  $('#panel-sec').hidden=!ok;
+  $('#logout').hidden=!ok;
+  if(ok)await load();
+}
+
+function openForm(i){
+  editId=i?i.id:null;
+  $('#form-title').textContent=i?'Editar platillo':'Nuevo platillo';
+  $('#f-name').value=i?i.name:'';
+  $('#f-price').value=i?i.price:'';
+  $('#f-desc').value=i?(i.description||''):'';
+  $('#f-cat').value=i?i.category:CATS[0];
+  $('#f-ok').checked=i?i.available:true;
+  $('#form-box').hidden=false;
+  $('#form-box').scrollIntoView({behavior:'smooth'});
+  $('#f-name').focus();
+}
+function closeForm(){$('#form-box').hidden=true;editId=null}
+
+async function toggleAvail(i){
+  var r=await sb.from('menu_items').update({available:!i.available}).eq('id',i.id);
+  if(r.error)alert('No se pudo actualizar el estado.');else load();
+}
+
+async function removeItem(i){
+  if(!confirm('¿Eliminar “'+i.name+'” del menú?'))return;
+  var r=await sb.from('menu_items').delete().eq('id',i.id);
+  if(r.error)alert('No se pudo eliminar el platillo.');else load();
+}
+
+$('#newbtn').onclick=function(){openForm(null)};
+$('#cancel').onclick=closeForm;
+
+$('#form').onsubmit=async function(ev){
+  ev.preventDefault();
+  var d={
+    name:$('#f-name').value.trim(),
+    price:parseFloat($('#f-price').value)||0,
+    description:$('#f-desc').value.trim(),
+    category:$('#f-cat').value,
+    available:$('#f-ok').checked
+  };
+  var r=editId
+    ?await sb.from('menu_items').update(d).eq('id',editId)
+    :await sb.from('menu_items').insert(d);
+  if(r.error){alert('No se pudo guardar: '+r.error.message);return}
+  closeForm();load();
+};
+
+$('#seedbtn').onclick=async function(){
+  if(!confirm('Esto reemplazará TODOS los platillos actuales por los 54 platillos base de Five Star. ¿Continuar?'))return;
+  var d=await sb.from('menu_items').delete().not('id','is',null);
+  if(d.error){alert('No se pudieron borrar los platillos anteriores.');return}
+  var w=await sb.from('menu_items').insert(DEFAULTS);
+  if(w.error){alert('No se pudo cargar el menú base.');return}
+  load();
+};
+
+$('#q').oninput=function(ev){queryText=ev.target.value;render()};
+
+$('#login').onsubmit=async function(ev){
+  ev.preventDefault();$('#err').textContent='';
+  var r=await sb.auth.signInWithPassword({email:$('#l-mail').value.trim(),password:$('#l-pass').value});
+  if(r.error){$('#err').textContent='Correo o contraseña incorrectos.';return}
+  $('#l-pass').value='';
+  checkSession();
+};
+
+$('#logout').onclick=async function(){
+  await sb.auth.signOut();
+  closeForm();
+  checkSession();
+};
+
+checkSession();
+</script>
+</body>
+</html>
